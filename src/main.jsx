@@ -77,6 +77,18 @@ function CompanyLogo() {
   );
 }
 
+function AppBar() {
+  return (
+    <div className="appBar">
+      <img src={companyLogo} alt="" className="appBarLogo" draggable="false" />
+      <div className="appBarText">
+        <strong>Сэкер Ресорсус Монголиа</strong>
+        <span>Аяллын аюулгүй ажиллагаа</span>
+      </div>
+    </div>
+  );
+}
+
 function App() {
   const [employees, setEmployees] = useState([emptyEmployee()]);
   const [showSafety, setShowSafety] = useState(false);
@@ -220,6 +232,7 @@ function App() {
   if (submitted) {
     return (
       <main className="page">
+        <AppBar />
         <div className="formCard successScreen">
           <div className="success successScreenBox">
             <CheckCircle2 size={20} />
@@ -235,6 +248,7 @@ function App() {
 
   return (
     <main className="page">
+      <AppBar />
       <div className="formCard">
         <header className="docHeader">
           <div className="logoBox">
