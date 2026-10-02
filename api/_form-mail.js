@@ -38,18 +38,26 @@ function recipients() {
   return configured.length > 0 ? configured : DEFAULT_RECIPIENTS;
 }
 
+// pdfkit's built-in fonts have no Cyrillic glyphs, so embed a font that does.
+const PDF_FONT = new URL("./fonts/DejaVuSans.ttf", import.meta.url);
+const PDF_FONT_BOLD = new URL("./fonts/DejaVuSans-Bold.ttf", import.meta.url);
+
 async function buildPdfBuffer(form, employees, signature) {
   const PDFDocument = (await import("pdfkit")).default;
+  const { readFileSync } = await import("fs");
   const doc = new PDFDocument({ size: "A4", margin: 40 });
   const buffers = [];
   doc.on("data", (d) => buffers.push(d));
 
-  doc.fontSize(16).text("Аяллын аюулгүй ажиллагааны зааварчилгаа", { align: "center" });
+  doc.registerFont("Regular", readFileSync(PDF_FONT));
+  doc.registerFont("Bold", readFileSync(PDF_FONT_BOLD));
+
+  doc.font("Bold").fontSize(16).text("Аяллын аюулгүй ажиллагааны зааварчилгаа", { align: "center" });
   doc.moveDown();
 
   const addRow = (label, value) => {
-    doc.fontSize(11).fillColor("black").text(`${label}: `, { continued: true, width: 150 });
-    doc.fontSize(11).fillColor("black").text(value || "-");
+    doc.font("Bold").fontSize(11).fillColor("black").text(`${label}: `, { continued: true });
+    doc.font("Regular").text(value || "-");
   };
 
   addRow("Компани", form.company);
@@ -63,7 +71,7 @@ async function buildPdfBuffer(form, employees, signature) {
 
   doc.moveDown();
   employees.forEach((employee, idx) => {
-    doc.fontSize(12).fillColor("black").text(`Ажилтан ${idx + 1}`, { underline: true });
+    doc.font("Bold").fontSize(12).fillColor("black").text(`Ажилтан ${idx + 1}`, { underline: true });
     addRow("Овог нэр", employee.name);
     addRow("Албан тушаал", employee.position);
     addRow("Утас", employee.phone);
@@ -72,8 +80,8 @@ async function buildPdfBuffer(form, employees, signature) {
 
   if (signature && signature.buffer) {
     try {
-      doc.addPage();
-      doc.fontSize(12).text("Гарын үсэг:");
+      doc.moveDown();
+      doc.font("Bold").fontSize(12).text("Гарын үсэг:");
       doc.image(signature.buffer, { fit: [400, 200], align: "left" });
     } catch (e) {
       // ignore if embedding fails
@@ -275,6 +283,15 @@ function buildText(form, employees) {
   return lines.join("\n");
 }
 
+function buildPdfFilename(employees) {
+  const dtf = new Intl.DateTimeFormat("en", { timeZone: "Asia/Ulaanbaatar", year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", hour12: false });
+  const parts = dtf.formatToParts(new Date()).reduce((acc, p) => ({ ...acc, [p.type]: p.value }), {});
+  const dateStr = `${parts.year}-${parts.month}-${parts.day}_${parts.hour}${parts.minute}`;
+  const safeNames = employees.map((e) => (e.name || "").replace(/[^a-zA-Z0-9-￿_-]+/g, "_")).filter(Boolean);
+  const namePart = safeNames.length ? safeNames.join("_") : "submission";
+  return `Travel_Request_${namePart}_${dateStr}.pdf`;
+}
+
 function buildSubject(form, employees) {
   const direction = form.direction === "Бусад" ? form.otherDirection : form.direction;
   const names = employees.map((employee) => employee.name).filter(Boolean).join(", ");
@@ -282,7 +299,7 @@ function buildSubject(form, employees) {
   return `Аяллын зааварчилгаа | ${form.travelDate} | ${direction} | ${names}`;
 }
 
-async function sendWithSmtp({ to, subject, html, text, signature }) {
+async function sendWithSmtp({ to, subject, html, text, signature, pdf }) {
   const nodemailer = (await import("nodemailer")).default;
 
   const port = Number(process.env.SMTP_PORT || 587);
@@ -317,14 +334,15 @@ async function sendWithSmtp({ to, subject, html, text, signature }) {
         content: signature.buffer,
         contentType: signature.contentType,
         cid: SIGNATURE_CID
-      }
+      },
+      { filename: pdf.filename, content: pdf.buffer, contentType: "application/pdf" }
     ]
   });
 
   return info.messageId;
 }
 
-async function sendWithResend({ to, subject, html, text, signature }) {
+async function sendWithResend({ to, subject, html, text, signature, pdf }) {
   const { Resend } = await import("resend");
   const resend = new Resend(process.env.RESEND_API_KEY);
 
@@ -340,7 +358,8 @@ async function sendWithResend({ to, subject, html, text, signature }) {
         content: signature.base64,
         contentType: signature.contentType,
         contentId: SIGNATURE_CID
-      }
+      },
+      { filename: pdf.filename, content: pdf.buffer.toString("base64"), contentType: "application/pdf" }
     ]
   });
 
@@ -396,12 +415,21 @@ export async function sendFormMail(payload) {
     };
   }
 
+  let pdf;
+  try {
+    pdf = { buffer: await buildPdfBuffer(form, employees, signature), filename: buildPdfFilename(employees) };
+  } catch (error) {
+    console.error("[api/send] PDF generation failed:", error);
+    return { status: 500, body: { error: "PDF үүсгэхэд алдаа гарлаа." } };
+  }
+
   const message = {
     to: recipients(),
     subject: buildSubject(form, employees),
     html: buildHtml(form, employees, true),
     text: buildText(form, employees),
-    signature
+    signature,
+    pdf
   };
 
   try {
@@ -423,8 +451,6 @@ export async function sendFormMail(payload) {
       }
 
       try {
-        const pdfBuffer = await buildPdfBuffer(form, employees, signature);
-
         const { google } = await import("googleapis");
         const oauth2Client = new google.auth.OAuth2(clientId, clientSecret);
         oauth2Client.setCredentials({ refresh_token: refreshToken });
@@ -432,15 +458,7 @@ export async function sendFormMail(payload) {
 
         const targetFolderId = await ensureYearMonthFolder(drive, parentFolder);
 
-        const now = new Date();
-        const dtf = new Intl.DateTimeFormat("en", { timeZone: "Asia/Ulaanbaatar", year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", hour12: false });
-        const parts = dtf.formatToParts(now).reduce((acc, p) => ({ ...acc, [p.type]: p.value }), {});
-        const dateStr = `${parts.year}-${parts.month}-${parts.day}_${parts.hour}${parts.minute}`;
-        const safeNames = employees.map((e) => (e.name || "").replace(/[^a-zA-Z0-9\u0080-\uFFFF_-]+/g, "_")).filter(Boolean);
-        const namePart = safeNames.length ? safeNames.join("_") : "submission";
-        const filename = `Travel_Request_${namePart}_${dateStr}.pdf`;
-
-        await uploadBufferToDrive(drive, pdfBuffer, filename, targetFolderId);
+        await uploadBufferToDrive(drive, pdf.buffer, pdf.filename, targetFolderId);
       } catch (err) {
         console.error("[api/send] Drive upload failed:", err);
         return { status: 500, body: { error: `Drive upload failed: ${err.message || String(err)}` } };

@@ -1,0 +1,7 @@
+{
+  "functions": {
+    "api/send.js": {
+      "includeFiles": "api/fonts/**"
+    }
+  }
+}
