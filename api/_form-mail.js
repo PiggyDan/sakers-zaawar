@@ -8,14 +8,13 @@
  */
 
 const DEFAULT_RECIPIENTS = [
-  "zasaginfo@gmail.com",
-  "zcm.hse.bilgee@gmail.com",
-  "hse.zcm@erkhettunsh.com",
+  "hrspecialist@gkllc.mn",
+  "admin@srmongolia.mn",
   "battseren@srmongolia.mn"
 ];
 
 // Resend only delivers to arbitrary addresses from a verified domain.
-const DEFAULT_FROM = "Аяллын маягт <onboarding@resend.dev>";
+const DEFAULT_FROM = "Сэкер Ресорсус Монголиа <onboarding@resend.dev>";
 
 // Keep well under Vercel's 4.5MB request body limit.
 const MAX_SIGNATURE_BYTES = 3 * 1024 * 1024;
