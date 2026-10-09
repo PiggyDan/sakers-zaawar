@@ -14,9 +14,9 @@ npm run dev
 
 Submitting POSTs to `/api/send`, which mails the form to:
 
-- it@gkllc.mn
-- admin@gkllc.mn
-- share@gkllc.mn
+- hrspecialist@gkllc.mn
+- admin@srmongolia.mn
+- battseren@srmongolia.mn
 
 Override the list with `MAIL_TO` (comma-separated) if needed.
 
@@ -28,15 +28,14 @@ inline images.
 
 Configured in `.env.local`:
 
-- **Company SMTP** (default) — `gkllc.mn` mail is hosted by mail.mn, so
-  `SMTP_HOST=smtp.mail.mn` on port 587 (STARTTLS). Use `smtp.mail.mn`
-  rather than `smtp.gkllc.mn`: they are the same server, but the
-  certificate only covers `*.mail.mn`, so the `gkllc.mn` name fails TLS
-  hostname verification. Fill in `SMTP_USER` and `SMTP_PASS` with the
+- **Company SMTP** (default) — `srmongolia.mn` (and `gkllc.mn`) mail is
+  hosted by mail.mn, so `SMTP_HOST=smtp.mail.mn` on port 587 (STARTTLS).
+  Use `smtp.mail.mn` rather than `smtp.srmongolia.mn`: the certificate only
+  covers `*.mail.mn`, so the company name fails TLS hostname verification. Fill in `SMTP_USER` and `SMTP_PASS` with the
   mailbox that sends the form. If port 587 is blocked on the network, use
   `SMTP_PORT=465` with `SMTP_SECURE=true`.
 - **Resend** (fallback) — used only when `SMTP_HOST` is empty. Requires the
-  `gkllc.mn` domain to be verified in Resend.
+  `srmongolia.mn` domain to be verified in Resend.
 
 Set the same variables in the Vercel project settings for production;
 `.env.local` is not deployed.
