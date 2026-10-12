@@ -29,7 +29,7 @@ const transportOptions = [
   "Бусад"
 ];
 
-const PUBLIC_TRANSPORT = "АТҮТ / Нийтийн тээвэр";
+const PUBLIC_TRANSPORT = "АТҮТ / Нийтийн тээвэр , Замын унаа";
 
 const steps = [
   { title: "Аяллын мэдээлэл", hint: "Компани, хэлтэс, өдөр, чиглэл" },

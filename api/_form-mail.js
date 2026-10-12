@@ -20,6 +20,7 @@ const DEFAULT_FROM = "Сэкер Ресорсус Монголиа <onboarding@r
 const MAX_SIGNATURE_BYTES = 3 * 1024 * 1024;
 
 const SIGNATURE_CID = "signature";
+const isPublicTransport = (transport) => ["АТҮТ / Нийтийн тээвэр", "АТҮТ / Нийтийн тээвэр , Замын унаа"].includes(transport);
 
 const esc = (value) =>
   String(value ?? "")
@@ -167,7 +168,7 @@ function parseSignature(signature) {
 
 function validate(form, employees) {
   const missing = [];
-  if (form.transport !== "АТҮТ / Нийтийн тээвэр") {
+  if (!isPublicTransport(form.transport)) {
   if (typeof form.driver !== "string" || !form.driver.trim()) missing.push("Жолоочийн нэр");
   if (typeof form.driverPhone !== "string" || !/^[0-9]+$/.test(form.driverPhone)) missing.push("Жолоочийн утасны дугаар (зөвхөн тоо)");
   }
@@ -382,7 +383,7 @@ export async function sendFormMail(payload) {
     return { status: 400, body: { error: "Маягтын мэдээлэл дутуу байна." } };
   }
 
-  if (form.transport !== "АТҮТ / Нийтийн тээвэр" && (typeof form.vehicle !== "string" || !/^\S[^\r\n]*, [0-9]{4} [А-ЯӨҮЁ]{3}$/u.test(form.vehicle.trim()))) {
+  if (!isPublicTransport(form.transport) && (typeof form.vehicle !== "string" || !/^\S[^\r\n]*, [0-9]{4} [А-ЯӨҮЁ]{3}$/u.test(form.vehicle.trim()))) {
     return { status: 400, body: { error: "Автомашины марк, улсын дугаарыг оруулна уу. Жишээ: Lexus LX700, 9911 УБА" } };
   }
 
