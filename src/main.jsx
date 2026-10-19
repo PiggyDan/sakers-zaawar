@@ -501,20 +501,17 @@ function App() {
               <Field label="Аялах чиглэл *">
                 <select name="direction" value={form.direction} onChange={updateForm}>
                   <option value="">Сонгох</option>
-                  <option>Улаанбаатар-Сайншанд</option>
-                  <option>Улаанбаатар-Чандмань уул төмрийн хүдрийн уурхай</option>
-                  <option>Улаанбаатар-Дэлгэрэх сум</option>
-                  <option>Улаанбаатар-Гурвантэс</option>
-                  <option>Сайншанд-Чандмань уул төмрийн хүдрийн уурхай</option>
-                  <option>Сайншанд-Дэлгэрэх сум</option>
-                  <option>Сайншанд-Улаанбаатар</option>
-                  <option>Сайншанд-Гурвантэс</option>
-                  <option>Гурвантэс-Улаанбаатар</option>
-                  <option>Гурвантэс-Сайншанд</option>
-                  <option>Чандмань уул төмрийн уурхай-Улаанбаатар</option>
-                  <option>Чандмань уул төмрийн уурхай-Сайншанд</option>
-                  <option>Чандмань уул төмрийн уурхай-Чойр</option>
-                  <option>Чандмань уул төмрийн уурхай-Гурвантэс</option>
+                  <option>УБ-Баянхонгор аймаг</option>
+                  <option>Баянхонгор аймаг-УБ</option>
+                  <option>УБ-Баянхонгор аймаг-Хотгор уурхай</option>
+                  <option>Хотгор уурхай-Баянхонгор-Улаанбаатар</option>
+                  <option>УБ-Баянхонгор аймаг-Хотгор уурхай-Зээгт уурхай</option>
+                  <option>Баянхонгор аймаг-Зээгт уурхай</option>
+                  <option>Зээгт уурхай-Баянхонгор аймаг</option>
+                  <option>УБ-Даланзадгад-Гурвантэс</option>
+                  <option>Даланзадгад-УБ</option>
+                  <option>УБ-Даланзадгад</option>
+                  <option>Гурвантэс-Даланзадгад-УБ</option>
                   <option>Бусад</option>
                 </select>
               </Field>
