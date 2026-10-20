@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { createRoot } from "react-dom/client";
 import {
   ChevronDown,
@@ -166,87 +166,9 @@ function AppBar({ step, onBack }) {
   );
 }
 
-/** Finger/mouse signature pad, with a photo upload as an alternative. */
-function SignaturePad({ value, onChange, onError }) {
-  const canvasRef = useRef(null);
-  const drawing = useRef(false);
-  const [uploaded, setUploaded] = useState(false);
-
-  useEffect(() => {
-    if (uploaded) return;
-
-    const canvas = canvasRef.current;
-    const ratio = window.devicePixelRatio || 1;
-    const { width, height } = canvas.getBoundingClientRect();
-    canvas.width = Math.round(width * ratio);
-    canvas.height = Math.round(height * ratio);
-
-    const context = canvas.getContext("2d");
-    context.scale(ratio, ratio);
-    context.lineWidth = 2.6;
-    context.lineCap = "round";
-    context.lineJoin = "round";
-    context.strokeStyle = "#0f172a";
-
-    // Coming back to this step remounts the canvas; repaint the saved strokes.
-    if (value) {
-      const image = new Image();
-      image.onload = () => context.drawImage(image, 0, 0, width, height);
-      image.src = value;
-    }
-    // Only on mount / mode switch; value updates come from this canvas itself.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [uploaded]);
-
-  const point = (e) => {
-    const rect = canvasRef.current.getBoundingClientRect();
-    return [e.clientX - rect.left, e.clientY - rect.top];
-  };
-
-  const start = (e) => {
-    const context = canvasRef.current.getContext("2d");
-    canvasRef.current.setPointerCapture(e.pointerId);
-    drawing.current = true;
-    const [x, y] = point(e);
-    context.beginPath();
-    context.moveTo(x, y);
-    context.lineTo(x + 0.01, y + 0.01);
-    context.stroke();
-  };
-
-  const move = (e) => {
-    if (!drawing.current) return;
-    const context = canvasRef.current.getContext("2d");
-    const [x, y] = point(e);
-    context.lineTo(x, y);
-    context.stroke();
-  };
-
-  const end = () => {
-    if (!drawing.current) return;
-    drawing.current = false;
-
-    // Flatten onto white so the strokes stay visible in every mail client.
-    const canvas = canvasRef.current;
-    const out = document.createElement("canvas");
-    out.width = canvas.width;
-    out.height = canvas.height;
-    const context = out.getContext("2d");
-    context.fillStyle = "#ffffff";
-    context.fillRect(0, 0, out.width, out.height);
-    context.drawImage(canvas, 0, 0);
-    onChange(out.toDataURL("image/png"));
-  };
-
-  const clear = () => {
-    onChange("");
-    if (uploaded) {
-      setUploaded(false);
-      return;
-    }
-    const canvas = canvasRef.current;
-    canvas.getContext("2d").clearRect(0, 0, canvas.width, canvas.height);
-  };
+/** Photo-only signature upload with a preview. */
+function SignatureUpload({ value, onChange, onError }) {
+  const clear = () => onChange("");
 
   const upload = async (e) => {
     const file = e.target.files?.[0];
@@ -272,30 +194,16 @@ function SignaturePad({ value, onChange, onError }) {
         )}
       </div>
 
-      {uploaded && value ? (
-        <div className="signatureCanvasWrap">
+      {value && (
+        <div className="signaturePreviewWrap">
           <img className="signaturePreview" src={value} alt="Гарын үсэг" />
-        </div>
-      ) : (
-        <div className="signatureCanvasWrap">
-          <canvas
-            ref={canvasRef}
-            className="signatureCanvas"
-            onPointerDown={start}
-            onPointerMove={move}
-            onPointerUp={end}
-            onPointerCancel={end}
-            aria-label="Гарын үсэг зурах талбар"
-          />
-          {!value && <span className="signatureHint">Энд хуруугаараа гарын үсэг зурна уу</span>}
-          <span className="signatureLine" aria-hidden="true" />
         </div>
       )}
 
       <label className="uploadSignature">
         <input type="file" accept="image/*" onChange={upload} />
         <ImagePlus size={16} />
-        <span>Эсвэл зураг оруулах</span>
+        <span>Гарын үсгийн зураг оруулах</span>
       </label>
     </div>
   );
@@ -703,7 +611,7 @@ function App() {
               )}
 
               <div className="card">
-                <SignaturePad value={signature} onChange={setSignature} onError={setToast} />
+                <SignatureUpload value={signature} onChange={setSignature} onError={setToast} />
               </div>
 
               <label className="accept">
