@@ -61,6 +61,19 @@ button {
   flex-direction: column;
 }
 
+.siteFooter {
+  padding: 16px 16px calc(16px + env(safe-area-inset-bottom));
+  border-top: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 12px;
+  text-align: center;
+}
+
+.siteFooter strong {
+  color: var(--ink);
+  font-weight: 600;
+}
+
 /* ---------- App bar ---------- */
 
 .appBar {

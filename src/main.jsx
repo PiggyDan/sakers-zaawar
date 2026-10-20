@@ -209,6 +209,10 @@ function SignatureUpload({ value, onChange, onError }) {
   );
 }
 
+function Footer() {
+  return <footer className="siteFooter">Powered by <strong>Daniel Knight</strong></footer>;
+}
+
 function App() {
   const [step, setStep] = useState(0);
   const [form, setForm] = useState(emptyForm);
@@ -352,6 +356,7 @@ function App() {
             Шинэ маягт бөглөх
           </button>
         </main>
+        <Footer />
       </div>
     );
   }
@@ -649,6 +654,7 @@ function App() {
           </button>
         </footer>
       </form>
+      <Footer />
 
       {toast && (
         <div className="toast" role="alert" onClick={() => setToast("")}>
